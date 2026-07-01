@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useApp } from "@/lib/context/app-context";
 import { formatCurrency } from "@/lib/utils";
-import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, CheckCircle2, Truck, Store, Utensils, CreditCard, Banknote, ShieldCheck } from "lucide-react";
+import { X, Trash2, Plus, Minus, ShoppingBag, ShoppingCart, Sparkles, ArrowRight, CheckCircle2, Truck, Store, Utensils, CreditCard, Banknote, ShieldCheck } from "lucide-react";
 
 export const CartDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
   const { cart, removeFromCart, updateQuantity, clearCart, subtotal, tax, placeOrderAsync, cartCount } = useApp();
@@ -124,14 +124,30 @@ export const CartDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
                 </button>
               </div>
             ) : cart.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-center py-12 space-y-4 animate-fade-in">
-                <ShoppingBag className="w-12 h-12 text-[#C5BEBA] mx-auto animate-subtle-zoom" />
-                <div className="space-y-1">
-                  <h3 className="font-serif font-bold text-2xl text-[#1A1817]">Your dining bag is empty</h3>
-                  <p className="text-xs text-[#6B6560] max-w-xs mx-auto leading-relaxed">
-                    Explore our menu catalog and select authentic dishes to build your feast.
+              <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-6 animate-fade-in my-auto">
+                <div className="relative mx-auto my-4">
+                  <div className="w-24 h-24 rounded-full bg-[#FFFFFF] border-2 border-dashed border-[#D97706]/40 flex items-center justify-center shadow-md animate-subtle-zoom">
+                    <ShoppingCart className="w-10 h-10 text-[#D97706]" />
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-[#1A1817] text-[#FAF8F5] flex items-center justify-center shadow-lg border-2 border-[#FAF8F5]">
+                    <span className="text-xs font-bold">0</span>
+                  </div>
+                  <Sparkles className="w-5 h-5 text-[#D97706] absolute -top-1 -right-1 animate-pulse" />
+                </div>
+                <div className="space-y-2 max-w-xs">
+                  <h3 className="font-serif font-bold text-2xl text-[#1A1817]">Your Dining Card is Empty</h3>
+                  <p className="text-xs text-[#6B6560] leading-relaxed font-medium">
+                    Your VIP dining cart currently has 0 items. Explore our culinary catalog and select executive dishes to craft your authentic feast.
                   </p>
                 </div>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-6 py-3.5 rounded-lg bg-[#1A1817] hover:bg-[#D97706] text-[#FAF8F5] text-xs font-bold uppercase tracking-widest transition-all duration-300 shadow-md active:scale-95 cursor-pointer flex items-center gap-2"
+                >
+                  <span>Explore Catalog</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
               </div>
             ) : (
               <div className="space-y-6 animate-fade-in">

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { AppProvider, useApp } from "@/lib/context/app-context";
 import { CustomerNavbar } from "@/components/navbar";
 import { HeroSection } from "@/components/hero-section";
 import { MenuGrid } from "@/components/menu-grid";
@@ -9,10 +8,8 @@ import { TableReservation } from "@/components/table-reservation";
 import { OrderTracker } from "@/components/order-tracker";
 import { AboutSection } from "@/components/about-section";
 import { CustomerFooter } from "@/components/footer";
-import { CartDrawer } from "@/components/cart-drawer";
 
-const CustomerPageContent: React.FC = () => {
-  const { isCartOpen, setIsCartOpen } = useApp();
+export default function CustomerHomePage() {
   const [activeTab, setActiveTab] = useState<string>("home");
 
   const handleExploreMenu = () => {
@@ -55,17 +52,6 @@ const CustomerPageContent: React.FC = () => {
       </main>
 
       <CustomerFooter />
-
-      {/* Cart Drawer */}
-      <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </div>
-  );
-};
-
-export default function CustomerHomePage() {
-  return (
-    <AppProvider>
-      <CustomerPageContent />
-    </AppProvider>
   );
 }

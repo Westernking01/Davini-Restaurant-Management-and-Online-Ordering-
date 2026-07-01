@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { AppWrapper } from "@/components/app-wrapper";
 
 export const metadata: Metadata = {
   title: "Davini's Food Bank | Authentic & Warm Culinary Experiences",
@@ -27,9 +28,11 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen flex flex-col selection:bg-amber-200 selection:text-amber-900 animate-fade-in">
-        <div className="flex-1 flex flex-col">
-          {children}
-        </div>
+        <AppWrapper>
+          <div className="flex-1 flex flex-col">
+            {children}
+          </div>
+        </AppWrapper>
       </body>
     </html>
   );
