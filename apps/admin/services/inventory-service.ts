@@ -1,4 +1,4 @@
-import { createServiceRoleClient } from "@/lib/supabase/service-role";
+import { supabaseAdmin } from "@/lib/supabase/service-role";
 import { UserRole } from "@/lib/context/admin-context";
 
 export interface InventoryMutationResult {
@@ -32,7 +32,7 @@ export class InventoryService {
     }
 
     try {
-      const supabase = createServiceRoleClient();
+      const supabase = supabaseAdmin;
 
       // 1. Fetch current inventory level
       const { data: item, error: fetchError } = await supabase
@@ -92,7 +92,7 @@ export class InventoryService {
     this.verifyConfiguration();
 
     try {
-      const supabase = createServiceRoleClient();
+      const supabase = supabaseAdmin;
 
       // For restaurant recipes, map sold product items to ingredients or deduct unit counts
       // Here we record transaction deductions against inventory items matching product name or linked recipe

@@ -1,6 +1,6 @@
 "use server";
 
-import { createServiceRoleClient } from "@/lib/supabase/service-role";
+import { supabaseAdmin } from "@/lib/supabase/service-role";
 import { paystackProvider } from "@/services/payment/paystack-provider";
 
 export interface VerifyPaymentResult {
@@ -19,7 +19,7 @@ export async function verifyPaymentAction(reference: string): Promise<VerifyPaym
     // Call Paystack Verify Transaction API
     const verificationResult = await paystackProvider.verifyTransaction(reference);
 
-    const supabase = createServiceRoleClient();
+    const supabase = supabaseAdmin;
 
     // Find the corresponding payment record
     const { data: paymentRow, error: fetchError } = await supabase

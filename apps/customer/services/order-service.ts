@@ -1,4 +1,4 @@
-import { createServiceRoleClient } from "@/lib/supabase/service-role";
+import { supabaseAdmin } from "@/lib/supabase/service-role";
 import { paystackProvider as paymentService } from "./payment/paystack-provider";
 
 export interface CreateOrderPayload {
@@ -47,7 +47,7 @@ export class CustomerOrderService {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     const isValidUuid = payload.userId && uuidRegex.test(payload.userId);
 
-    const supabase = createServiceRoleClient();
+    const supabase = supabaseAdmin;
 
     // Verify user exists in public.users to prevent foreign key violations
     let validUserIdToInsert: string | null = null;

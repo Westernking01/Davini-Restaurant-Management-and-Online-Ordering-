@@ -1,4 +1,4 @@
-import { createServiceRoleClient } from "@/lib/supabase/service-role";
+import { supabaseAdmin } from "@/lib/supabase/service-role";
 
 export interface RefundResult {
   success: boolean;
@@ -9,7 +9,7 @@ export interface RefundResult {
 export class RefundService {
   async processRefund(paymentId: string, amount: number, reason: string): Promise<RefundResult> {
     try {
-      const supabase = createServiceRoleClient();
+      const supabase = supabaseAdmin;
 
       // 1. Fetch original payment record
       const { data: payment, error: fetchError } = await supabase

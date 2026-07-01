@@ -1,10 +1,10 @@
 "use server";
 
-import { createServiceRoleClient } from "@/lib/supabase/service-role";
+import { supabaseAdmin } from "@/lib/supabase/service-role";
 
 export async function syncUserProfileAction(userId: string, email: string, name: string, phone?: string) {
   try {
-    const supabase = createServiceRoleClient();
+    const supabase = supabaseAdmin;
 
     // 1. Check if public.users already exists
     const { data: existingUser } = await supabase
