@@ -9,6 +9,14 @@ const nextConfig = {
   turbopack: {
     root: path.resolve(__dirname, "../../"),
   },
+
+  transpilePackages: [
+    "shared"
+  ],
+
+  experimental: {
+    externalDir: true,
+  },
 };
 
 export default nextConfig;
