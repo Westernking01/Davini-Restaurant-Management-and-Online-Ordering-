@@ -54,6 +54,7 @@ interface AppContextType {
   dbError: string | null;
   isLoading: boolean;
   realtimeStatus: "CONNECTED" | "RECONNECTING" | "DISCONNECTED";
+  authUser: any | null;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -68,6 +69,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [realtimeStatus, setRealtimeStatus] = useState<"CONNECTED" | "RECONNECTING" | "DISCONNECTED">("DISCONNECTED");
   const [customerId, setCustomerId] = useState<string>("");
+  const [authUser, setAuthUser] = useState<any | null>(null);
 
   useEffect(() => {
     // Initialize stable customer session ID
@@ -81,19 +83,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const supabase = createClient();
     supabase.auth.getSession().then(({ data }) => {
       if (data?.session?.user) {
+        setAuthUser(data.session.user);
         setCustomerId(data.session.user.id);
         localStorage.setItem("davinis_customer_user_id", data.session.user.id);
+      } else {
+        setAuthUser(null);
       }
     });
 
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
+        setAuthUser(session.user);
         setCustomerId(session.user.id);
         localStorage.setItem("davinis_customer_user_id", session.user.id);
-      } else if (event === "SIGNED_OUT") {
-        const newGuestId = "cust_guest_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
-        setCustomerId(newGuestId);
-        localStorage.setItem("davinis_customer_user_id", newGuestId);
+      } else {
+        setAuthUser(null);
+        if (event === "SIGNED_OUT") {
+          const newGuestId = "cust_guest_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
+          setCustomerId(newGuestId);
+          localStorage.setItem("davinis_customer_user_id", newGuestId);
+        }
       }
     });
 
@@ -303,6 +312,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         dbError,
         isLoading,
         realtimeStatus,
+        authUser,
       }}
     >
       {children}
