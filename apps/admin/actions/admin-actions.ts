@@ -1,6 +1,6 @@
 "use server";
 
-import { createServiceRoleClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { orderStateMachine, OrderStatus } from "@/services/order-state-machine";
 import { inventoryService } from "@/services/inventory-service";
 import { UserRole } from "@/lib/context/admin-context";
@@ -39,7 +39,7 @@ export async function fetchAdminDashboardDataAction() {
       throw new Error("CONFIGURATION_ERROR: Supabase service role key or URL is missing.");
     }
 
-    const supabase = await createServiceRoleClient();
+    const supabase = createServiceRoleClient();
 
     const [ordersRes, productsRes, inventoryRes, customersRes, paymentsRes] = await Promise.all([
       supabase.from("orders").select("*, order_items(*), payments(*)").order("created_at", { ascending: false }),
@@ -77,7 +77,7 @@ export async function toggleProductAvailabilityAction(productId: string, current
     return { success: false, errorMessage: "RBAC_DENIED: Your role cannot modify menu availability." };
   }
   try {
-    const supabase = await createServiceRoleClient();
+    const supabase = createServiceRoleClient();
     const { error } = await supabase
       .from("products")
       .update({ available: !currentAvailable, updated_at: new Date().toISOString() })

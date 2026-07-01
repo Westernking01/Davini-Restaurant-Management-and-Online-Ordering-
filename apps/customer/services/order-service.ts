@@ -1,4 +1,4 @@
-import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { paystackProvider as paymentService } from "./payment/paystack-provider";
 
 export interface CreateOrderPayload {
@@ -30,7 +30,7 @@ export interface OrderCreationResult {
 
 export class CustomerOrderService {
   private verifyConfiguration() {
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
       throw new Error("CONFIGURATION_ERROR: Supabase credentials are missing. Please verify .env settings.");
     }
   }
@@ -47,15 +47,11 @@ export class CustomerOrderService {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     const isValidUuid = payload.userId && uuidRegex.test(payload.userId);
 
-    // Try to get authenticated Supabase user session if available
-    const authClient = await createClient();
-    const { data: { user } } = await authClient.auth.getUser();
-
-    const supabase = await createServiceRoleClient();
+    const supabase = createServiceRoleClient();
 
     // Verify user exists in public.users to prevent foreign key violations
     let validUserIdToInsert: string | null = null;
-    const targetUserId = (user && user.id) ? user.id : (!isGuest && isValidUuid ? payload.userId : null);
+    const targetUserId = (!isGuest && isValidUuid) ? payload.userId : null;
 
     if (targetUserId) {
       const { data: pubUser } = await supabase
@@ -66,9 +62,9 @@ export class CustomerOrderService {
 
       if (pubUser) {
         validUserIdToInsert = pubUser.id;
-      } else if (user && user.id === targetUserId) {
-        const email = user.email || payload.email || "customer@davinisfoodbank.com";
-        const name = user.user_metadata?.full_name || payload.customerName || email.split("@")[0] || "Customer";
+      } else {
+        const email = payload.email || "customer@davinisfoodbank.com";
+        const name = payload.customerName || email.split("@")[0] || "Customer";
 
         const { error: insertErr } = await supabase.from("users").insert({
           id: targetUserId,
@@ -87,8 +83,6 @@ export class CustomerOrderService {
           console.error("Failed to sync missing public.users row:", insertErr.message);
           validUserIdToInsert = null;
         }
-      } else {
-        validUserIdToInsert = null;
       }
     }
 

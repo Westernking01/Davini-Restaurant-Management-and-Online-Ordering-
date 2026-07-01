@@ -78,6 +78,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
     setCustomerId(storedId);
 
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data }) => {
+      if (data?.session?.user) {
+        setCustomerId(data.session.user.id);
+        localStorage.setItem("davinis_customer_user_id", data.session.user.id);
+      }
+    });
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        setCustomerId(session.user.id);
+        localStorage.setItem("davinis_customer_user_id", session.user.id);
+      } else if (event === "SIGNED_OUT") {
+        const newGuestId = "cust_guest_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
+        setCustomerId(newGuestId);
+        localStorage.setItem("davinis_customer_user_id", newGuestId);
+      }
+    });
+
     // Check local storage cart
     const savedCart = localStorage.getItem("davinis_customer_cart");
     if (savedCart) {
@@ -131,6 +150,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     loadBackendData();
+
+    return () => {
+      authListener?.subscription?.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {

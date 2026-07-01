@@ -1,4 +1,4 @@
-import { createServiceRoleClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { UserRole } from "@/lib/context/admin-context";
 import { inventoryService } from "./inventory-service";
 
@@ -56,7 +56,7 @@ export class OrderStateMachine {
     }
 
     try {
-      const supabase = await createServiceRoleClient();
+      const supabase = createServiceRoleClient();
 
       // 3. Perform Database Update
       const { error: updateError } = await supabase

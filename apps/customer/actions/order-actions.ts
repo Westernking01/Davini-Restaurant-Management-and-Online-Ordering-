@@ -1,6 +1,7 @@
 "use server";
 
-import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { customerOrderService, CreateOrderPayload, OrderCreationResult } from "@/services/order-service";
 import { INITIAL_CATEGORIES, INITIAL_PRODUCTS } from "@/lib/data/mock-data";
 
@@ -22,7 +23,7 @@ export async function fetchMenuProductsAction() {
     if (error) throw error;
 
     if (!data || data.length === 0) {
-      const serviceClient = await createServiceRoleClient();
+      const serviceClient = createServiceRoleClient();
       const catRows = INITIAL_CATEGORIES.map((c) => ({
         id: c.id,
         name: c.name,
@@ -61,7 +62,7 @@ export async function fetchCategoriesAction() {
     if (error) throw error;
 
     if (!data || data.length === 0) {
-      const serviceClient = await createServiceRoleClient();
+      const serviceClient = createServiceRoleClient();
       const catRows = INITIAL_CATEGORIES.map((c) => ({
         id: c.id,
         name: c.name,
