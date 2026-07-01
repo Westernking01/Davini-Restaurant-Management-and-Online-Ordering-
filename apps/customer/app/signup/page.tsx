@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signUpCustomer } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/client";
-import { ArrowLeft, Mail, Lock, User, Phone, AlertCircle } from "lucide-react";
+import { ArrowLeft, Mail, Lock, User, Phone, AlertCircle, CheckCircle2 } from "lucide-react";
 import { BrandLogo } from "@/components/ui/brand-logo";
 import { AuthVisualPanel } from "@/components/auth-visual-panel";
 
@@ -18,10 +18,12 @@ export default function CustomerSignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccessMessage(null);
 
     if (password.length < 6) {
       setError("Password must be at least 6 characters in length.");
@@ -34,14 +36,25 @@ export default function CustomerSignupPage() {
       const { data, error: authError } = await signUpCustomer(email, password, name, phone);
       if (authError) {
         setError(authError.message || "Could not register your profile. Please check your information.");
-        setIsLoading(false);
         return;
       }
 
-      router.push("/");
-      router.refresh();
+      if (data?.user && !data?.session) {
+        setSuccessMessage("Account created. Please check your email to verify your account.");
+        return;
+      }
+
+      if (data?.user) {
+        setSuccessMessage("Account created successfully");
+        setTimeout(() => {
+          router.push("/account");
+          router.refresh();
+        }, 1200);
+        return;
+      }
     } catch (err: any) {
       setError("An unexpected network error occurred during registration.");
+    } finally {
       setIsLoading(false);
     }
   };
@@ -118,6 +131,13 @@ export default function CustomerSignupPage() {
               <div className="p-4 rounded-lg bg-[#FDF2F2] border border-[#F8B4B4] flex items-start gap-3 text-[#9B1C1C] text-xs font-semibold animate-scale-fade shadow-2xs">
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-[#E02424]" />
                 <span className="leading-relaxed">{error}</span>
+              </div>
+            )}
+
+            {successMessage && (
+              <div className="p-4 rounded-lg bg-[#E8F0E9] border border-[#A2D2A9] flex items-start gap-3 text-[#1E3F20] text-xs font-semibold animate-scale-fade shadow-2xs">
+                <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-[#2E7D32]" />
+                <span className="leading-relaxed">{successMessage}</span>
               </div>
             )}
 
@@ -228,10 +248,10 @@ export default function CustomerSignupPage() {
               <div className="pt-2">
                 <button
                   type="submit"
-                  disabled={isLoading || isGoogleLoading}
+                  disabled={isLoading || isGoogleLoading || !!successMessage}
                   className="w-full py-4 text-xs uppercase tracking-[0.18em] font-bold bg-[#1A1817] hover:bg-[#D97706] text-[#FAF8F5] rounded-lg transition-all duration-300 active:scale-98 cursor-pointer shadow-md disabled:opacity-50"
                 >
-                  {isLoading ? "Creating Profile..." : "Create Account"}
+                  {isLoading ? "Creating Profile..." : successMessage ? "Account Created" : "Create Account"}
                 </button>
               </div>
             </form>

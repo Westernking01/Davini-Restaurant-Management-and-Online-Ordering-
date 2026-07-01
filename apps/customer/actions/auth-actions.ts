@@ -6,40 +6,24 @@ export async function syncUserProfileAction(userId: string, email: string, name:
   try {
     const supabase = supabaseAdmin;
 
-    // 1. Check if public.users already exists
-    const { data: existingUser } = await supabase
-      .from("users")
-      .select("id")
-      .eq("id", userId)
-      .single();
+    // 1. Upsert public.users
+    const { error: insertError } = await supabase.from("users").upsert({
+      id: userId,
+      name: name || email.split("@")[0] || "Customer",
+      email: email,
+      phone: phone || null,
+      role: "CUSTOMER",
+    }, { onConflict: "id" });
 
-    if (!existingUser) {
-      const { error: insertError } = await supabase.from("users").insert({
-        id: userId,
-        name: name || email.split("@")[0] || "Customer",
-        email: email,
-        phone: phone || null,
-        role: "CUSTOMER",
-      });
-      if (insertError) {
-        console.error("Error creating public.users record:", insertError.message);
-        return { success: false, error: insertError.message };
-      }
+    if (insertError) {
+      console.error("Error creating public.users record:", insertError.message);
     }
 
-    // 2. Check if customer_profiles already exists
-    const { data: existingProfile } = await supabase
-      .from("customer_profiles")
-      .select("user_id")
-      .eq("user_id", userId)
-      .single();
-
-    if (!existingProfile) {
-      await supabase.from("customer_profiles").upsert({
-        user_id: userId,
-        loyalty_points: 0,
-      }, { onConflict: "user_id" });
-    }
+    // 2. Upsert customer_profiles
+    await supabase.from("customer_profiles").upsert({
+      user_id: userId,
+      loyalty_points: 0,
+    }, { onConflict: "user_id" });
 
     return { success: true };
   } catch (err: any) {
