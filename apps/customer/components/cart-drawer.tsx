@@ -61,46 +61,42 @@ export const CartDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
 
   return (
     <div 
-      className="fixed inset-0 z-50 overflow-hidden bg-black/50 backdrop-blur-xs animate-fade-in font-sans"
+      className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs animate-fade-in font-sans flex justify-end items-start overflow-y-auto"
       onClick={onClose}
     >
-      <div className="absolute inset-y-0 right-0 max-w-full flex pl-10">
-        <div 
-          className="w-screen max-w-md bg-[#FAF8F5] border-l border-[#E6E1DA] shadow-2xl flex flex-col animate-slide-in-right"
-          onClick={(e) => e.stopPropagation()}
-        >
-          
-          {/* Header */}
-          <div className="p-6 border-b border-[#E6E1DA] flex items-center justify-between bg-[#FFFFFF]">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded bg-[#1A1817] flex items-center justify-center text-[#FAF8F5]">
-                <ShoppingBag className="w-4 h-4 text-[#C86D3B]" />
-              </div>
-              <div>
-                <h2 className="font-serif font-bold text-xl text-[#1A1817] leading-none">Dining Concierge Bag</h2>
-                <span className="text-[10px] text-[#6B6560] uppercase tracking-widest font-semibold mt-1 block">VIP Order Service</span>
-              </div>
+      <div className="w-full sm:w-screen max-w-md bg-[#FAF8F5] sm:border-l border-[#E6E1DA] shadow-2xl flex flex-col max-h-[100dvh] overflow-hidden animate-slide-in-right ml-auto">
+        
+        {/* Header */}
+        <div className="shrink-0 p-6 border-b border-[#E6E1DA] flex items-center justify-between bg-[#FFFFFF]">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded bg-[#1A1817] flex items-center justify-center text-[#FAF8F5]">
+              <ShoppingBag className="w-4 h-4 text-[#C86D3B]" />
             </div>
-            <div className="flex items-center space-x-3">
-              {cart.length > 0 && !orderSuccess && (
-                <button
-                  onClick={clearCart}
-                  className="text-xs font-semibold text-[#DC2626] hover:underline px-2 py-1 rounded cursor-pointer flex items-center gap-1 active:scale-95 transition-transform"
-                >
-                  <Trash2 className="w-3.5 h-3.5" /> Clear
-                </button>
-              )}
-              <button
-                onClick={onClose}
-                className="p-2 rounded hover:bg-[#F4F0EA] text-[#1A1817] transition-colors cursor-pointer active:scale-95"
-              >
-                <X className="w-5 h-5" />
-              </button>
+            <div>
+              <h2 className="font-serif font-bold text-xl text-[#1A1817] leading-none">Dining Concierge Bag</h2>
+              <span className="text-[10px] text-[#6B6560] uppercase tracking-widest font-semibold mt-1 block">VIP Order Service</span>
             </div>
           </div>
+          <div className="flex items-center space-x-3">
+            {cart.length > 0 && !orderSuccess && (
+              <button
+                onClick={clearCart}
+                className="text-xs font-semibold text-[#DC2626] hover:underline px-2 py-1 rounded cursor-pointer flex items-center gap-1 active:scale-95 transition-transform"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Clear
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="p-2 rounded hover:bg-[#F4F0EA] text-[#1A1817] transition-colors cursor-pointer active:scale-95"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
 
-          {/* Content Body */}
-          <div className="flex-1 overflow-y-auto p-6">
+        {/* Content Body */}
+        <div className="overflow-y-auto p-6 pb-7">
             {orderSuccess ? (
               <div className="py-12 text-center space-y-6 bg-[#FFFFFF] p-8 rounded border border-[#E6E1DA] shadow-2xs my-4 animate-scale-fade">
                 <div className="w-16 h-16 bg-[#E8F0E9] text-[#1E3F20] rounded-full flex items-center justify-center mx-auto animate-spring-pop">
@@ -405,6 +401,5 @@ export const CartDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
           </div>
         </div>
       </div>
-    </div>
   );
 };
