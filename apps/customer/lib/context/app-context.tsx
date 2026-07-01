@@ -106,10 +106,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     });
 
-    // Check local storage cart
+    // Check local storage cart and clean incompatible/mock IDs
     const savedCart = localStorage.getItem("davinis_customer_cart");
     if (savedCart) {
-      try { setCart(JSON.parse(savedCart)); } catch (e) {}
+      try {
+        const parsed = JSON.parse(savedCart);
+        if (Array.isArray(parsed)) {
+          const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+          const validCart = parsed.filter(
+            (item: any) =>
+              item?.product?.id &&
+              uuidRegex.test(item.product.id) &&
+              !item.product.id.startsWith("prod_")
+          );
+          if (validCart.length !== parsed.length) {
+            console.warn("Cleared incompatible or mock cart items from cache.");
+          }
+          setCart(validCart);
+        }
+      } catch (e) {
+        localStorage.removeItem("davinis_customer_cart");
+      }
     }
 
     // Load backend workflows
@@ -170,6 +187,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [cart]);
 
   const addToCart = (product: Product, quantity: number, options: ProductOption[] = [], note?: string) => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!product || !product.id || !uuidRegex.test(product.id) || product.id.startsWith("prod_")) {
+      console.error("Cannot add item with invalid or mock product ID:", product?.id);
+      return;
+    }
+
     const optionsCost = options.reduce((sum, opt) => sum + opt.extraPrice, 0);
     const itemPrice = product.price + optionsCost;
 

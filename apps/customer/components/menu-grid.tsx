@@ -18,6 +18,7 @@ export const MenuGrid: React.FC = () => {
   const [chosenOptions, setChosenOptions] = useState<ProductOption[]>([]);
   const [customNote, setCustomNote] = useState<string>("");
   const [quantity, setQuantity] = useState<number>(1);
+  const [addingAnimationId, setAddingAnimationId] = useState<string | null>(null);
   const [addedAnimationId, setAddedAnimationId] = useState<string | null>(null);
 
   const filteredProducts = products.filter((prod) => {
@@ -31,8 +32,12 @@ export const MenuGrid: React.FC = () => {
 
   const handleOpenCustomize = (prod: Product) => {
     if (!prod.options || prod.options.length === 0) {
-      addToCart(prod, 1);
-      triggerAddedAnimation(prod.id);
+      setAddingAnimationId(prod.id);
+      setTimeout(() => {
+        addToCart(prod, 1);
+        setAddingAnimationId(null);
+        triggerAddedAnimation(prod.id);
+      }, 250);
     } else {
       setSelectedProduct(prod);
       setActiveImageIdx(0);
@@ -63,9 +68,13 @@ export const MenuGrid: React.FC = () => {
 
   const handleConfirmCustomAdd = () => {
     if (!selectedProduct) return;
-    addToCart(selectedProduct, quantity, chosenOptions, customNote);
-    triggerAddedAnimation(selectedProduct.id);
-    setSelectedProduct(null);
+    setAddingAnimationId(selectedProduct.id);
+    setTimeout(() => {
+      addToCart(selectedProduct, quantity, chosenOptions, customNote);
+      setAddingAnimationId(null);
+      triggerAddedAnimation(selectedProduct.id);
+      setSelectedProduct(null);
+    }, 250);
   };
 
   const calculateCustomPrice = () => {
@@ -193,13 +202,18 @@ export const MenuGrid: React.FC = () => {
 
                 <button
                   onClick={() => handleOpenCustomize(prod)}
+                  disabled={addingAnimationId === prod.id}
                   className={`px-5 py-3 rounded text-xs font-semibold uppercase tracking-wider transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
                     addedAnimationId === prod.id 
                       ? "bg-[#1E3F20] text-white animate-spring-pop shadow-md" 
+                      : addingAnimationId === prod.id
+                      ? "bg-[#C86D3B] text-white opacity-90"
                       : "bg-[#1A1817] hover:bg-[#C86D3B] text-[#FAF8F5] active:scale-95"
                   }`}
                 >
-                  {addedAnimationId === prod.id ? (
+                  {addingAnimationId === prod.id ? (
+                    <span>Adding...</span>
+                  ) : addedAnimationId === prod.id ? (
                     <>
                       <Check className="w-3.5 h-3.5" />
                       <span>Added ✓</span>
@@ -411,9 +425,10 @@ export const MenuGrid: React.FC = () => {
               </div>
               <button 
                 onClick={handleConfirmCustomAdd} 
-                className="bg-[#1A1817] hover:bg-[#C86D3B] text-[#FAF8F5] text-xs font-semibold uppercase tracking-[0.15em] px-8 py-4 rounded transition-all cursor-pointer shadow-sm"
+                disabled={addingAnimationId === selectedProduct.id}
+                className="bg-[#1A1817] hover:bg-[#C86D3B] text-[#FAF8F5] text-xs font-semibold uppercase tracking-[0.15em] px-8 py-4 rounded transition-all cursor-pointer shadow-sm disabled:opacity-75"
               >
-                Add to Bag &bull; {formatCurrency(calculateCustomPrice())}
+                {addingAnimationId === selectedProduct.id ? "Adding..." : `Add to Bag • ${formatCurrency(calculateCustomPrice())}`}
               </button>
             </div>
 

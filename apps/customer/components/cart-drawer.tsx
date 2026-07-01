@@ -391,7 +391,7 @@ export const CartDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
                       disabled={isCheckingOut || cart.length === 0}
                       className="w-full bg-[#1A1817] hover:bg-[#C86D3B] text-[#FAF8F5] text-xs font-semibold uppercase tracking-[0.15em] py-4 rounded transition-all duration-300 active:scale-98 cursor-pointer shadow-sm flex items-center justify-center gap-2 disabled:opacity-50"
                     >
-                      <span>{isCheckingOut ? "Processing..." : `Place Feast Order (${formatCurrency(total)})`}</span>
+                      <span>{isCheckingOut ? "Processing order..." : `Place Feast Order (${formatCurrency(total)})`}</span>
                       <ArrowRight className="w-4 h-4" />
                     </button>
                   </div>

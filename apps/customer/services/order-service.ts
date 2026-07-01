@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase/service-role";
 import { paystackProvider as paymentService } from "./payment/paystack-provider";
+import { INITIAL_PRODUCTS } from "@/lib/data/mock-data";
 
 export interface CreateOrderPayload {
   userId: string;
@@ -66,12 +67,12 @@ export class CustomerOrderService {
         const email = payload.email || "customer@davinisfoodbank.com";
         const name = payload.customerName || email.split("@")[0] || "Customer";
 
-        const { error: insertErr } = await supabase.from("users").insert({
+        const { error: insertErr } = await supabase.from("users").upsert({
           id: targetUserId,
           name: name,
           email: email,
           role: "CUSTOMER",
-        });
+        }, { onConflict: "id" });
 
         if (!insertErr) {
           validUserIdToInsert = targetUserId;
@@ -86,7 +87,38 @@ export class CustomerOrderService {
       }
     }
 
-    // 1. Calculate Totals
+    // 1. Calculate Totals & Pre-Validate Products
+    for (const item of payload.items) {
+      if (!uuidRegex.test(item.productId)) {
+        return { success: false, errorMessage: `Invalid product UUID "${item.productId}" for item "${item.productName}". Please refresh or clear old cart items.` };
+      }
+    }
+
+    const productIds = payload.items.map((i) => i.productId);
+    const { data: existingProducts } = await supabase.from("products").select("id").in("id", productIds);
+    const existingIdSet = new Set((existingProducts || []).map((p: any) => p.id));
+
+    for (const item of payload.items) {
+      if (!existingIdSet.has(item.productId)) {
+        const seedProd = INITIAL_PRODUCTS.find((p) => p.id === item.productId);
+        if (seedProd) {
+          await supabase.from("products").upsert({
+            id: seedProd.id,
+            category_id: seedProd.categoryId,
+            name: seedProd.name,
+            description: seedProd.description,
+            price: seedProd.price,
+            image_url: seedProd.image,
+            preparation_time: seedProd.prepTime,
+            available: seedProd.available,
+            featured: seedProd.featured,
+          }, { onConflict: "id" });
+        } else {
+          return { success: false, errorMessage: `Product "${item.productName}" no longer exists in the database catalog.` };
+        }
+      }
+    }
+
     const subtotal = payload.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const deliveryFee = payload.orderType === "DELIVERY" ? 1500 : 0;
     const tax = Math.round(subtotal * 0.075);
@@ -121,13 +153,7 @@ export class CustomerOrderService {
 
       createdOrderId = orderData.id;
 
-      // 3. Validate product_id UUID format and Insert Immutable Order Items Snapshots
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      for (const item of payload.items) {
-        if (!uuidRegex.test(item.productId)) {
-          throw new Error(`Invalid product UUID format "${item.productId}" for item "${item.productName}". Please refresh your browser or clear old cart items.`);
-        }
-      }
+      // 3. Insert Immutable Order Items Snapshots
 
       const orderItemsRows = payload.items.map((item) => ({
         order_id: createdOrderId,
