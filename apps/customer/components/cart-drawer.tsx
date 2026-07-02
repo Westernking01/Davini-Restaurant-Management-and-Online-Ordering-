@@ -31,26 +31,37 @@ export const CartDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
     setIsCheckingOut(true);
     setCheckoutError(null);
 
-    const res = await placeOrderAsync({
-      name,
-      phone,
-      email,
-      address: orderType === "DELIVERY" ? address : undefined,
-      note: `[Payment: ${paymentMethod}] ${note}`.trim(),
-      orderType,
-      paymentMethod,
-    });
+    try {
+      const res = await placeOrderAsync({
+        name,
+        phone,
+        email,
+        address: orderType === "DELIVERY" ? address : undefined,
+        note: `[Payment: ${paymentMethod}] ${note}`.trim(),
+        orderType,
+        paymentMethod,
+      });
 
-    if (res.success && res.authorizationUrl) {
-      window.location.href = res.authorizationUrl;
-      return;
-    }
+      if (!res.success) {
+        setIsCheckingOut(false);
+        setCheckoutError(res.errorMessage || "Failed to process order transaction. Please check your details and try again.");
+        return;
+      }
 
-    setIsCheckingOut(false);
-    if (res.success && res.orderNumber) {
-      setOrderSuccess(res.orderNumber);
-    } else {
-      setCheckoutError(res.errorMessage || "Failed to process order transaction.");
+      if (res.authorizationUrl && res.authorizationUrl !== "/") {
+        window.location.href = res.authorizationUrl;
+        return;
+      }
+
+      setIsCheckingOut(false);
+      if (res.orderNumber) {
+        setOrderSuccess(res.orderNumber);
+      } else {
+        setCheckoutError("Order placed but missing order confirmation number.");
+      }
+    } catch (err: any) {
+      setIsCheckingOut(false);
+      setCheckoutError(err?.message || "Unexpected error processing order.");
     }
   };
 
@@ -64,7 +75,10 @@ export const CartDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
       className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs animate-fade-in font-sans flex justify-end items-start overflow-y-auto"
       onClick={onClose}
     >
-      <div className="w-full sm:w-screen max-w-md bg-[#FAF8F5] sm:border-l border-[#E6E1DA] shadow-2xl flex flex-col max-h-[100dvh] overflow-hidden animate-slide-in-right ml-auto">
+      <div 
+        className="w-full max-w-md bg-[#FAF8F5] sm:border-l border-[#E6E1DA] shadow-2xl flex flex-col max-h-[100dvh] overflow-hidden animate-slide-in-right ml-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         
         {/* Header */}
         <div className="shrink-0 p-6 border-b border-[#E6E1DA] flex items-center justify-between bg-[#FFFFFF]">
@@ -203,14 +217,14 @@ export const CartDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
                         className="flex gap-3 p-3.5 rounded bg-[#FFFFFF] border border-[#E6E1DA] shadow-2xs animate-fade-in transition-all duration-200 hover:border-[#C86D3B]/50"
                       >
                         <img
-                          src={item.product.image}
-                          alt={item.product.name}
+                          src={item?.product?.image || ""}
+                          alt={item?.product?.name || "Dish"}
                           loading="lazy"
                           className="w-14 h-14 rounded object-cover shrink-0 bg-[#F4F0EA]"
                         />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between">
-                            <h4 className="font-serif font-bold text-sm text-[#1A1817] truncate">{item.product.name}</h4>
+                            <h4 className="font-serif font-bold text-sm text-[#1A1817] truncate">{item?.product?.name || "Delicious Dish"}</h4>
                             <button
                               onClick={() => removeFromCart(item.id)}
                               className="text-[#6B6560] hover:text-[#DC2626] p-1 cursor-pointer"
@@ -219,15 +233,15 @@ export const CartDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
                             </button>
                           </div>
                           
-                          {item.selectedOptions.length > 0 && (
+                          {(item?.selectedOptions || []).length > 0 && (
                             <p className="text-[11px] text-[#C86D3B] font-semibold mt-0.5 truncate">
-                              + {item.selectedOptions.map((o) => o.name).join(", ")}
+                              + {(item?.selectedOptions || []).map((o) => o.name).join(", ")}
                             </p>
                           )}
 
                           <div className="flex items-center justify-between mt-2.5">
                             <span className="font-serif font-bold text-sm text-[#1A1817]">
-                              {formatCurrency(item.itemPrice * item.quantity)}
+                              {formatCurrency((item?.itemPrice || 0) * (item?.quantity || 1))}
                             </span>
                             <div className="flex items-center border border-[#E6E1DA] rounded bg-[#F4F0EA] overflow-hidden">
                               <button

@@ -196,8 +196,11 @@ export class CustomerOrderService {
 
         if (paymentInit.success && paymentInit.authorizationUrl) {
           authorizationUrl = paymentInit.authorizationUrl;
-        } else {
+        } else if (process.env.NODE_ENV !== "production") {
           console.warn("Paystack transaction initialization fallback mode:", paymentInit.errorMessage);
+          authorizationUrl = `/payment/callback?reference=${reference}`;
+        } else {
+          throw new Error(`Paystack Payment Gateway Error: ${paymentInit.errorMessage || "Failed to initialize card transaction."}`);
         }
       }
 
