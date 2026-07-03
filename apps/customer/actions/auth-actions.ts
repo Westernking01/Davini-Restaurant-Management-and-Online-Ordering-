@@ -32,7 +32,7 @@ export async function syncUserProfileAction(userId: string, email: string, name:
   }
 }
 
-export async function fetchAccountDashboardDataAction(userId: string, authEmail?: string, authName?: string, authPhone?: string) {
+export async function fetchAccountDashboardDataAction(userId: string, authEmail?: string, authName?: string, authPhone?: string, authAvatarUrl?: string) {
   try {
     const supabase = supabaseAdmin;
 
@@ -77,6 +77,7 @@ export async function fetchAccountDashboardDataAction(userId: string, authEmail?
           email: userRow?.email || authEmail || "",
           phone: userRow?.phone || authPhone || "",
           address: profileRow?.address || "",
+          avatarUrl: profileRow?.profile_image || authAvatarUrl || null,
           loyaltyPoints: profileRow?.loyalty_points ?? (totalOrders * 50),
           memberSince: userRow?.created_at ? new Date(userRow.created_at).toLocaleDateString("en-NG", { month: "short", year: "numeric" }) : "Recent",
         },

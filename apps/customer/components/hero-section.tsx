@@ -141,7 +141,7 @@ const AUTOPLAY_DURATION = 6000; // Exact 6 seconds per slide
 export const HeroSection: React.FC<{ onExplore: () => void }> = ({ onExplore }) => {
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [progress, setProgress] = useState<number>(0);
-  const startTimeRef = useRef<number>(Date.now());
+  const startTimeRef = useRef<number>(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const slide = HERO_SLIDES[currentIndex];

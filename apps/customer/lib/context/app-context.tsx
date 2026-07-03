@@ -78,7 +78,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       storedId = "cust_guest_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
       localStorage.setItem("davinis_customer_user_id", storedId);
     }
-    setCustomerId(storedId);
+    setTimeout(() => setCustomerId(storedId!), 0);
 
     const supabase = createClient();
     supabase.auth.getSession().then(({ data }) => {
@@ -127,7 +127,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           if (validCart.length !== parsed.length) {
             console.warn("Cleared incompatible or corrupt cart items from cache.");
           }
-          setCart(validCart);
+          setTimeout(() => setCart(validCart), 0);
         } else {
           localStorage.removeItem("davinis_customer_cart");
         }

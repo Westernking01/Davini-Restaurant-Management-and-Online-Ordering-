@@ -73,7 +73,7 @@ export const CartDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   useEffect(() => {
-    setMounted(true);
+    setTimeout(() => setMounted(true), 0);
   }, []);
 
   useEffect(() => {

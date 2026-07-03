@@ -104,8 +104,12 @@ export const CustomerNavbar: React.FC<{ activeTab?: string; onSelectTab?: (tab: 
                 onClick={() => setAccountMenuOpen(!accountMenuOpen)}
                 className="flex items-center gap-2 py-1.5 px-3 rounded-full border border-[#E6E1DA] hover:border-[#C86D3B] bg-[#FFFFFF] transition-all duration-200 cursor-pointer active:scale-95 shadow-2xs"
               >
-                <div className="w-6 h-6 rounded-full bg-[#1A1817] text-[#FAF8F5] flex items-center justify-center font-serif font-bold text-xs">
-                  {authUser?.user_metadata?.full_name?.charAt(0) || authUser?.email?.charAt(0)?.toUpperCase() || "V"}
+                <div className="w-6 h-6 rounded-full bg-[#1A1817] text-[#FAF8F5] flex items-center justify-center font-serif font-bold text-xs overflow-hidden shrink-0">
+                  {authUser?.user_metadata?.avatar_url || authUser?.user_metadata?.picture ? (
+                    <img src={authUser.user_metadata.avatar_url || authUser.user_metadata.picture} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    authUser?.user_metadata?.full_name?.charAt(0) || authUser?.email?.charAt(0)?.toUpperCase() || "V"
+                  )}
                 </div>
                 <span className="text-xs font-semibold text-[#1A1817] max-w-[110px] truncate">
                   {authUser?.user_metadata?.full_name?.split(" ")[0] || authUser?.email?.split("@")[0] || "VIP Member"}
@@ -119,8 +123,12 @@ export const CustomerNavbar: React.FC<{ activeTab?: string; onSelectTab?: (tab: 
                   <div className="absolute right-0 mt-2 w-64 bg-[#FFFFFF] rounded-xl border border-[#E6E1DA] shadow-xl z-50 p-4 space-y-3 animate-fade-in origin-top-right">
                     {/* Header */}
                     <div className="flex items-center gap-3 pb-3 border-b border-[#E6E1DA]/60">
-                      <div className="w-10 h-10 rounded-full bg-[#C86D3B] text-[#FAF8F5] flex items-center justify-center font-serif font-bold text-base shrink-0 shadow-sm">
-                        {authUser?.user_metadata?.full_name?.charAt(0) || authUser?.email?.charAt(0)?.toUpperCase() || "V"}
+                      <div className="w-10 h-10 rounded-full bg-[#C86D3B] text-[#FAF8F5] flex items-center justify-center font-serif font-bold text-base shrink-0 shadow-sm overflow-hidden">
+                        {authUser?.user_metadata?.avatar_url || authUser?.user_metadata?.picture ? (
+                          <img src={authUser.user_metadata.avatar_url || authUser.user_metadata.picture} alt="Avatar" className="w-full h-full object-cover" />
+                        ) : (
+                          authUser?.user_metadata?.full_name?.charAt(0) || authUser?.email?.charAt(0)?.toUpperCase() || "V"
+                        )}
                       </div>
                       <div className="min-w-0">
                         <h4 className="font-serif font-bold text-sm text-[#1A1817] truncate">
@@ -236,8 +244,12 @@ export const CustomerNavbar: React.FC<{ activeTab?: string; onSelectTab?: (tab: 
             {authUser ? (
               <div className="space-y-4">
                 <div className="flex items-center gap-3 p-3 bg-[#FFFFFF] rounded-lg border border-[#E6E1DA]">
-                  <div className="w-10 h-10 rounded-full bg-[#C86D3B] text-[#FAF8F5] flex items-center justify-center font-serif font-bold text-base">
-                    {authUser?.user_metadata?.full_name?.charAt(0) || authUser?.email?.charAt(0)?.toUpperCase() || "V"}
+                  <div className="w-10 h-10 rounded-full bg-[#C86D3B] text-[#FAF8F5] flex items-center justify-center font-serif font-bold text-base overflow-hidden shrink-0">
+                    {authUser?.user_metadata?.avatar_url || authUser?.user_metadata?.picture ? (
+                      <img src={authUser.user_metadata.avatar_url || authUser.user_metadata.picture} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      authUser?.user_metadata?.full_name?.charAt(0) || authUser?.email?.charAt(0)?.toUpperCase() || "V"
+                    )}
                   </div>
                   <div className="min-w-0">
                     <h4 className="font-serif font-bold text-sm text-[#1A1817] truncate">

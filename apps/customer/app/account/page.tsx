@@ -25,7 +25,6 @@ import {
   ShoppingBag, 
   ArrowLeft,
   Sparkles,
-  ShieldCheck,
   Truck,
   Utensils
 } from "lucide-react";
@@ -53,7 +52,7 @@ function AccountDashboardContent() {
 
   useEffect(() => {
     if (activeTabParam === "orders" || activeTabParam === "profile") {
-      setActiveTab(activeTabParam as any);
+      setTimeout(() => setActiveTab(activeTabParam as any), 0);
     }
   }, [activeTabParam]);
 
@@ -72,8 +71,9 @@ function AccountDashboardContent() {
       const email = session.user.email;
       const fullName = session.user.user_metadata?.full_name;
       const phone = session.user.user_metadata?.phone;
+      const avatarUrl = session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture;
 
-      const res = await fetchAccountDashboardDataAction(userId, email, fullName, phone);
+      const res = await fetchAccountDashboardDataAction(userId, email, fullName, phone, avatarUrl);
       if (res.success && res.data) {
         setDashboardData(res.data);
         setEditName(res.data.profile.name || "");
@@ -192,8 +192,12 @@ function AccountDashboardContent() {
         <div className="lg:hidden bg-[#1A1817] rounded-xl p-6 text-[#FAF8F5] shadow-lg border border-[#1A1817] relative overflow-hidden animate-fade-in">
           <Sparkles className="w-24 h-24 text-[#C86D3B]/15 absolute -bottom-4 -right-4 pointer-events-none" />
           <div className="flex items-center space-x-4">
-            <div className="w-14 h-14 rounded-full bg-[#C86D3B] text-[#FAF8F5] flex items-center justify-center font-serif font-bold text-xl shrink-0 shadow-md border-2 border-[#FAF8F5]/20">
-              {profile.name?.charAt(0) || "V"}
+            <div className="w-14 h-14 rounded-full bg-[#C86D3B] text-[#FAF8F5] flex items-center justify-center font-serif font-bold text-xl shrink-0 shadow-md border-2 border-[#FAF8F5]/20 overflow-hidden">
+              {profile.avatarUrl ? (
+                <img src={profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                profile.name?.charAt(0) || "V"
+              )}
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
@@ -241,8 +245,12 @@ function AccountDashboardContent() {
             {/* Header Banner */}
             <div className="bg-[#1A1817] p-6 text-center relative overflow-hidden">
               <Sparkles className="w-20 h-20 text-[#C86D3B]/15 absolute -bottom-2 -right-2 pointer-events-none" />
-              <div className="w-20 h-20 rounded-full bg-[#C86D3B] text-[#FAF8F5] flex items-center justify-center font-serif font-bold text-3xl mx-auto shadow-md border-3 border-[#FAF8F5]/20 mb-3 animate-subtle-zoom">
-                {profile.name?.charAt(0) || "V"}
+              <div className="w-20 h-20 rounded-full bg-[#C86D3B] text-[#FAF8F5] flex items-center justify-center font-serif font-bold text-3xl mx-auto shadow-md border-3 border-[#FAF8F5]/20 mb-3 animate-subtle-zoom overflow-hidden">
+                {profile.avatarUrl ? (
+                  <img src={profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  profile.name?.charAt(0) || "V"
+                )}
               </div>
               <h3 className="font-serif font-bold text-lg text-[#FAF8F5] truncate">{profile.name}</h3>
               <p className="text-[11px] text-[#C5BEBA] font-mono truncate mt-0.5">{profile.email}</p>

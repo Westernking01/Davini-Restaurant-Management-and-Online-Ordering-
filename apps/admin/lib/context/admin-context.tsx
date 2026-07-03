@@ -92,7 +92,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   useEffect(() => {
     const savedRole = localStorage.getItem("davinis_admin_role");
-    if (savedRole) setUserRole(savedRole as AdminRole);
+    if (savedRole) setTimeout(() => setUserRole(savedRole as AdminRole), 0);
 
     async function loadBackendIntelligence() {
       setIsLoading(true);

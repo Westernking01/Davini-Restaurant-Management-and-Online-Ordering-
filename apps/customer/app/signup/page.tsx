@@ -62,19 +62,22 @@ export default function CustomerSignupPage() {
   const handleGoogleSignup = async () => {
     setError(null);
     setIsGoogleLoading(true);
+    console.log("[OAuth] OAuth started for Google provider");
     try {
       const supabase = createClient();
       const { error: googleError } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/`,
+          redirectTo: `${window.location.origin}/auth/callback`,
         },
       });
       if (googleError) {
+        console.error("[OAuth] Error starting Google OAuth:", googleError.message);
         setError(googleError.message || "Google OAuth is currently unavailable.");
         setIsGoogleLoading(false);
       }
-    } catch (err) {
+    } catch (err: any) {
+      console.error("[OAuth] Failed to initialize Google signup:", err?.message || err);
       setError("Failed to initialize Google signup.");
       setIsGoogleLoading(false);
     }

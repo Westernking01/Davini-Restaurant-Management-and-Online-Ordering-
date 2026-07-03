@@ -6,10 +6,10 @@
     "apps/*"
   ],
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "dev": "npm run dev --workspaces",
+    "build": "npm run build --workspaces",
+    "start": "npm run start --workspaces",
+    "lint": "eslint \"apps/**/*.{ts,tsx}\""
   },
   "dependencies": {
     "@paystack/inline-js": "^2.23.1",

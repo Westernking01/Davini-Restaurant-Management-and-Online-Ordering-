@@ -33,7 +33,7 @@ function ElapsedTime({ createdAt }: { createdAt: string }) {
   React.useEffect(() => {
     // createdAt is a formatted time string from context, so we can't compute diff
     // Show the created time instead
-    setElapsed(createdAt);
+    setTimeout(() => setElapsed(createdAt), 0);
   }, [createdAt]);
 
   return <span className="op-mono text-[11px]" style={{ color: "#9C948E" }}>{elapsed}</span>;

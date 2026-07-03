@@ -57,7 +57,7 @@ function getNextActionLabel(status: Order["status"], type: string) {
   }
 }
 
-function handleNextStatus(order: Order, updateOrderStatus: Function) {
+function handleNextStatus(order: Order, updateOrderStatus: (id: string, status: any) => void) {
   switch (order.status) {
     case "PENDING":          updateOrderStatus(order.id, "CONFIRMED"); break;
     case "CONFIRMED":        updateOrderStatus(order.id, "PREPARING"); break;
@@ -71,7 +71,7 @@ function handleNextStatus(order: Order, updateOrderStatus: Function) {
 
 function OrderRow({ order, updateOrderStatus, userRole }: {
   order: Order;
-  updateOrderStatus: Function;
+  updateOrderStatus: (id: string, status: any) => void;
   userRole: string;
 }) {
   const [expanded, setExpanded] = useState(false);

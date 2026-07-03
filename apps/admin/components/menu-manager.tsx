@@ -81,7 +81,7 @@ export const MenuManager: React.FC = () => {
           >
             <span style={{ color: "#059669" }}>{activeCount} active</span>
             <span style={{ color: "#E8E3DC" }}>·</span>
-            <span style={{ color: "#DC2626" }}>{soldOutCount} 86'd</span>
+            <span style={{ color: "#DC2626" }}>{soldOutCount} 86&apos;d</span>
           </div>
 
           <div className="relative">

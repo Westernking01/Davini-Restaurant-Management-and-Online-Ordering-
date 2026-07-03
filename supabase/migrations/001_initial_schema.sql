@@ -378,9 +378,11 @@ CREATE POLICY "Public read reviews" ON reviews FOR SELECT USING (status = true);
 -- 2. CUSTOMER ISOLATION POLICIES (Strictly own data)
 CREATE POLICY "Customer view own user record" ON users FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "Customer update own user record" ON users FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Customer insert own user record" ON users FOR INSERT WITH CHECK (auth.uid() = id);
 
 CREATE POLICY "Customer view own profile" ON customer_profiles FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Customer update own profile" ON customer_profiles FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Customer insert own profile" ON customer_profiles FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Customer manage own cart" ON carts FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "Customer manage own cart items" ON cart_items FOR ALL USING (cart_id IN (SELECT id FROM carts WHERE user_id = auth.uid()));
