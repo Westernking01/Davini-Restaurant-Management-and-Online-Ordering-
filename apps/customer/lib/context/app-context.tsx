@@ -106,25 +106,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     });
 
-    // Check local storage cart and clean incompatible/mock IDs
+    // Check local storage cart and clean incompatible/mock/corrupt schema
     const savedCart = localStorage.getItem("davinis_customer_cart");
     if (savedCart) {
       try {
         const parsed = JSON.parse(savedCart);
         if (Array.isArray(parsed)) {
           const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-          const validCart = parsed.filter(
-            (item: any) =>
-              item?.product?.id &&
-              uuidRegex.test(item.product.id) &&
-              !item.product.id.startsWith("prod_")
-          );
+          const validCart = parsed.filter((item: any) => {
+            if (!item || typeof item !== "object" || !item.id) return false;
+            const prod = item.product;
+            if (!prod || typeof prod !== "object" || !prod.id || !uuidRegex.test(prod.id) || prod.id.startsWith("prod_")) {
+              return false;
+            }
+            if (typeof item.quantity !== "number" || isNaN(item.quantity) || item.quantity <= 0) return false;
+            if (typeof item.itemPrice !== "number" || isNaN(item.itemPrice) || item.itemPrice < 0) return false;
+            if (item.selectedOptions && !Array.isArray(item.selectedOptions)) return false;
+            return true;
+          });
           if (validCart.length !== parsed.length) {
-            console.warn("Cleared incompatible or mock cart items from cache.");
+            console.warn("Cleared incompatible or corrupt cart items from cache.");
           }
           setCart(validCart);
+        } else {
+          localStorage.removeItem("davinis_customer_cart");
         }
       } catch (e) {
+        console.error("Failed to parse cached cart:", e);
         localStorage.removeItem("davinis_customer_cart");
       }
     }
@@ -222,6 +230,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         ];
       }
     });
+    console.log("[Cart Debug] Added product to cart:", product?.id);
     setIsCartOpen(true);
   };
 
@@ -234,7 +243,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       prev
         .map((item) => {
           if (item.id === itemId) {
-            const newQty = item.quantity + delta;
+            const newQty = (item.quantity || 1) + delta;
             return newQty > 0 ? { ...item, quantity: newQty } : null;
           }
           return item;
@@ -247,11 +256,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCart([]);
   };
 
+  const handleSetIsCartOpen = (open: boolean) => {
+    console.log("[Cart Debug] isCartOpen:", open, "cartCount:", cart.length, "cart:", cart);
+    setIsCartOpen(open);
+  };
+
   const { subtotal, tax, cartTotal, cartCount } = useMemo(() => {
-    const sub = cart.reduce((sum, item) => sum + item.itemPrice * item.quantity, 0);
+    const sub = (cart || []).reduce((sum, item) => {
+      const price = typeof item?.itemPrice === "number" && !isNaN(item.itemPrice) ? item.itemPrice : (item?.product?.price || 0);
+      const qty = typeof item?.quantity === "number" && !isNaN(item.quantity) ? item.quantity : 1;
+      return sum + price * qty;
+    }, 0);
     const tx = Math.round(sub * 0.075);
     const tot = sub + tx;
-    const cnt = cart.reduce((sum, item) => sum + item.quantity, 0);
+    const cnt = (cart || []).reduce((sum, item) => sum + (typeof item?.quantity === "number" && !isNaN(item.quantity) ? item.quantity : 1), 0);
     return { subtotal: sub, tax: tx, cartTotal: tot, cartCount: cnt };
   }, [cart]);
 
@@ -320,7 +338,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         categories,
         cart,
         isCartOpen,
-        setIsCartOpen,
+        setIsCartOpen: handleSetIsCartOpen,
         addToCart,
         removeFromCart,
         updateQuantity,

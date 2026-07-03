@@ -1,13 +1,66 @@
 "use client";
 
-import React, { useState } from "react";
-import { useApp } from "@/lib/context/app-context";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
+import { useApp, CartItem } from "@/lib/context/app-context";
 import { formatCurrency } from "@/lib/utils";
 import { X, Trash2, Plus, Minus, ShoppingBag, ShoppingCart, Sparkles, ArrowRight, CheckCircle2, Truck, Store, Utensils, CreditCard, Banknote, ShieldCheck } from "lucide-react";
 
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+  onReset: () => void;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+}
+
+class CartDrawerErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(): ErrorBoundaryState {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error("CartDrawer rendering error caught by ErrorBoundary:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="h-full flex flex-col items-center justify-center p-8 text-center space-y-4 my-auto">
+          <div className="w-16 h-16 rounded-full bg-[#FDF2F2] border border-[#F8B4B4] flex items-center justify-center text-[#DC2626] mx-auto">
+            <X className="w-8 h-8" />
+          </div>
+          <h3 className="font-serif font-bold text-2xl text-[#1A1817]">Unable to load your cart.</h3>
+          <p className="text-xs text-[#6B6560] max-w-xs leading-relaxed">
+            We encountered an unexpected error while rendering your dining bag. Your cart data has been safely reset.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              this.setState({ hasError: false });
+              this.props.onReset();
+            }}
+            className="px-6 py-3 rounded-lg bg-[#1A1817] text-[#FAF8F5] text-xs font-bold uppercase tracking-widest hover:bg-[#C86D3B] transition-all cursor-pointer shadow-sm"
+          >
+            Reset & Close
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export const CartDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
-  const { cart, removeFromCart, updateQuantity, clearCart, subtotal, tax, placeOrderAsync, cartCount } = useApp();
-  
+  const { cart: rawCart, removeFromCart, updateQuantity, clearCart, subtotal, tax, placeOrderAsync } = useApp();
+  const [mounted, setMounted] = useState(false);
+
   const [orderType, setOrderType] = useState<"DELIVERY" | "PICKUP" | "DINE_IN">("DELIVERY");
   const [paymentMethod, setPaymentMethod] = useState<"CARD" | "CASH">("CARD");
   const [name, setName] = useState("Chief Adebayo O.");
@@ -19,10 +72,28 @@ export const CartDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
   const [orderSuccess, setOrderSuccess] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-  const deliveryFee = orderType === "DELIVERY" ? (subtotal > 0 ? 1500 : 0) : 0;
-  const total = subtotal + deliveryFee + tax;
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
+
+  if (!mounted || !isOpen) return null;
+
+  // Defensive runtime guards
+  const cart: CartItem[] = Array.isArray(rawCart) ? rawCart : [];
+  const validCartCount = cart.reduce((sum, item) => sum + (typeof item?.quantity === "number" && !isNaN(item.quantity) ? item.quantity : 1), 0);
+  const deliveryFee = orderType === "DELIVERY" ? ((subtotal || 0) > 0 ? 1500 : 0) : 0;
+  const total = (subtotal || 0) + deliveryFee + (tax || 0);
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,49 +141,66 @@ export const CartDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
     onClose();
   };
 
-  return (
-    <div 
-      className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs animate-fade-in font-sans flex justify-end items-start overflow-y-auto"
+  const handleBrowseMenu = () => {
+    onClose();
+    const el = document.getElementById("menu");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth" });
+    } else {
+      window.location.href = "/#menu";
+    }
+  };
+
+  const drawerContent = (
+    <div
+      className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm animate-fade-in font-sans flex justify-end overflow-hidden"
       onClick={onClose}
     >
-      <div 
-        className="w-full max-w-md bg-[#FAF8F5] sm:border-l border-[#E6E1DA] shadow-2xl flex flex-col max-h-[100dvh] overflow-hidden animate-slide-in-right ml-auto"
+      <div
+        className="relative w-full max-w-md bg-[#FAF8F5] sm:border-l border-[#E6E1DA] shadow-2xl flex flex-col h-full max-h-screen overflow-hidden animate-slide-in-right z-[101]"
         onClick={(e) => e.stopPropagation()}
       >
-        
-        {/* Header */}
-        <div className="shrink-0 p-6 border-b border-[#E6E1DA] flex items-center justify-between bg-[#FFFFFF]">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded bg-[#1A1817] flex items-center justify-center text-[#FAF8F5]">
-              <ShoppingBag className="w-4 h-4 text-[#C86D3B]" />
+        <CartDrawerErrorBoundary
+          onReset={() => {
+            clearCart();
+            onClose();
+          }}
+        >
+          {/* Header */}
+          <div className="shrink-0 p-6 border-b border-[#E6E1DA] flex items-center justify-between bg-[#FFFFFF]">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded bg-[#1A1817] flex items-center justify-center text-[#FAF8F5]">
+                <ShoppingBag className="w-4 h-4 text-[#C86D3B]" />
+              </div>
+              <div>
+                <h2 className="font-serif font-bold text-xl text-[#1A1817] leading-none">Dining Concierge Bag</h2>
+                <span className="text-[10px] text-[#6B6560] uppercase tracking-widest font-semibold mt-1 block">VIP Order Service</span>
+              </div>
             </div>
-            <div>
-              <h2 className="font-serif font-bold text-xl text-[#1A1817] leading-none">Dining Concierge Bag</h2>
-              <span className="text-[10px] text-[#6B6560] uppercase tracking-widest font-semibold mt-1 block">VIP Order Service</span>
-            </div>
-          </div>
-          <div className="flex items-center space-x-3">
-            {cart.length > 0 && !orderSuccess && (
+            <div className="flex items-center space-x-3">
+              {cart.length > 0 && !orderSuccess && (
+                <button
+                  type="button"
+                  onClick={clearCart}
+                  className="text-xs font-semibold text-[#DC2626] hover:underline px-2 py-1 rounded cursor-pointer flex items-center gap-1 active:scale-95 transition-transform"
+                >
+                  <Trash2 className="w-3.5 h-3.5" /> Clear
+                </button>
+              )}
               <button
-                onClick={clearCart}
-                className="text-xs font-semibold text-[#DC2626] hover:underline px-2 py-1 rounded cursor-pointer flex items-center gap-1 active:scale-95 transition-transform"
+                type="button"
+                onClick={onClose}
+                className="p-2 rounded hover:bg-[#F4F0EA] text-[#1A1817] transition-colors cursor-pointer active:scale-95"
               >
-                <Trash2 className="w-3.5 h-3.5" /> Clear
+                <X className="w-5 h-5" />
               </button>
-            )}
-            <button
-              onClick={onClose}
-              className="p-2 rounded hover:bg-[#F4F0EA] text-[#1A1817] transition-colors cursor-pointer active:scale-95"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            </div>
           </div>
-        </div>
 
-        {/* Content Body */}
-        <div className="overflow-y-auto p-6 pb-7">
+          {/* Content Body */}
+          <div className="overflow-y-auto p-6 pb-7 flex-1 flex flex-col">
             {orderSuccess ? (
-              <div className="py-12 text-center space-y-6 bg-[#FFFFFF] p-8 rounded border border-[#E6E1DA] shadow-2xs my-4 animate-scale-fade">
+              <div className="py-12 text-center space-y-6 bg-[#FFFFFF] p-8 rounded border border-[#E6E1DA] shadow-2xs my-auto animate-scale-fade">
                 <div className="w-16 h-16 bg-[#E8F0E9] text-[#1E3F20] rounded-full flex items-center justify-center mx-auto animate-spring-pop">
                   <CheckCircle2 className="w-8 h-8" />
                 </div>
@@ -126,15 +214,16 @@ export const CartDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
                     <span className="font-serif font-bold text-lg text-[#C86D3B] tracking-wider">{orderSuccess}</span>
                   </div>
                 </div>
-                <button 
-                  onClick={handleResetAndClose} 
+                <button
+                  type="button"
+                  onClick={handleResetAndClose}
                   className="w-full bg-[#1A1817] hover:bg-[#C86D3B] text-[#FAF8F5] py-3.5 rounded text-xs font-semibold uppercase tracking-widest transition-all cursor-pointer shadow-xs active:scale-95"
                 >
                   Return to Lounge
                 </button>
               </div>
             ) : cart.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-6 animate-fade-in my-auto">
+              <div className="flex-1 flex flex-col items-center justify-center text-center p-6 space-y-6 animate-fade-in my-auto">
                 <div className="relative mx-auto my-4">
                   <div className="w-24 h-24 rounded-full bg-[#FFFFFF] border-2 border-dashed border-[#D97706]/40 flex items-center justify-center shadow-md animate-subtle-zoom">
                     <ShoppingCart className="w-10 h-10 text-[#D97706]" />
@@ -145,17 +234,17 @@ export const CartDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
                   <Sparkles className="w-5 h-5 text-[#D97706] absolute -top-1 -right-1 animate-pulse" />
                 </div>
                 <div className="space-y-2 max-w-xs">
-                  <h3 className="font-serif font-bold text-2xl text-[#1A1817]">Your Dining Card is Empty</h3>
+                  <h3 className="font-serif font-bold text-2xl text-[#1A1817]">Your bag is empty</h3>
                   <p className="text-xs text-[#6B6560] leading-relaxed font-medium">
-                    Your VIP dining cart currently has 0 items. Explore our culinary catalog and select executive dishes to craft your authentic feast.
+                    Your VIP dining bag currently has 0 items. Explore our culinary catalog and select executive dishes to craft your authentic feast.
                   </p>
                 </div>
                 <button
                   type="button"
-                  onClick={onClose}
+                  onClick={handleBrowseMenu}
                   className="px-6 py-3.5 rounded-lg bg-[#1A1817] hover:bg-[#D97706] text-[#FAF8F5] text-xs font-bold uppercase tracking-widest transition-all duration-300 shadow-md active:scale-95 cursor-pointer flex items-center gap-2"
                 >
-                  <span>Explore Catalog</span>
+                  <span>Browse Menu</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -207,61 +296,72 @@ export const CartDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
                 {/* Selected Dishes */}
                 <div className="space-y-2.5">
                   <label className="text-xs font-semibold text-[#1A1817] uppercase tracking-wider block">
-                    Selected Items (<span key={cartCount} className="inline-block animate-spring-pop">{cartCount}</span>)
+                    Selected Items (<span key={validCartCount} className="inline-block animate-spring-pop">{validCartCount}</span>)
                   </label>
                   <div className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
-                    {cart.map((item, idx) => (
-                      <div
-                        key={item.id}
-                        style={{ animationDelay: `${idx * 60}ms` }}
-                        className="flex gap-3 p-3.5 rounded bg-[#FFFFFF] border border-[#E6E1DA] shadow-2xs animate-fade-in transition-all duration-200 hover:border-[#C86D3B]/50"
-                      >
-                        <img
-                          src={item?.product?.image || ""}
-                          alt={item?.product?.name || "Dish"}
-                          loading="lazy"
-                          className="w-14 h-14 rounded object-cover shrink-0 bg-[#F4F0EA]"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between">
-                            <h4 className="font-serif font-bold text-sm text-[#1A1817] truncate">{item?.product?.name || "Delicious Dish"}</h4>
-                            <button
-                              onClick={() => removeFromCart(item.id)}
-                              className="text-[#6B6560] hover:text-[#DC2626] p-1 cursor-pointer"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                          
-                          {(item?.selectedOptions || []).length > 0 && (
-                            <p className="text-[11px] text-[#C86D3B] font-semibold mt-0.5 truncate">
-                              + {(item?.selectedOptions || []).map((o) => o.name).join(", ")}
-                            </p>
-                          )}
+                    {cart.map((item, idx) => {
+                      if (!item || !item.id) return null;
+                      const product = item.product || {};
+                      const itemOptions = Array.isArray(item.selectedOptions) ? item.selectedOptions.filter(Boolean) : [];
+                      const itemQty = typeof item.quantity === "number" && !isNaN(item.quantity) ? item.quantity : 1;
+                      const itemPrice = typeof item.itemPrice === "number" && !isNaN(item.itemPrice) ? item.itemPrice : (product.price || 0);
 
-                          <div className="flex items-center justify-between mt-2.5">
-                            <span className="font-serif font-bold text-sm text-[#1A1817]">
-                              {formatCurrency((item?.itemPrice || 0) * (item?.quantity || 1))}
-                            </span>
-                            <div className="flex items-center border border-[#E6E1DA] rounded bg-[#F4F0EA] overflow-hidden">
+                      return (
+                        <div
+                          key={item.id}
+                          style={{ animationDelay: `${idx * 60}ms` }}
+                          className="flex gap-3 p-3.5 rounded bg-[#FFFFFF] border border-[#E6E1DA] shadow-2xs animate-fade-in transition-all duration-200 hover:border-[#C86D3B]/50"
+                        >
+                          <img
+                            src={product.image || "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80"}
+                            alt={product.name || "Dish"}
+                            loading="lazy"
+                            className="w-14 h-14 rounded object-cover shrink-0 bg-[#F4F0EA]"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between">
+                              <h4 className="font-serif font-bold text-sm text-[#1A1817] truncate">{product.name || "Delicious Dish"}</h4>
                               <button
-                                onClick={() => updateQuantity(item.id, -1)}
-                                className="px-2 py-0.5 hover:bg-[#E6E1DA] text-[#1A1817] font-bold transition-colors cursor-pointer"
+                                type="button"
+                                onClick={() => removeFromCart(item.id)}
+                                className="text-[#6B6560] hover:text-[#DC2626] p-1 cursor-pointer"
                               >
-                                <Minus className="w-3 h-3" />
+                                <Trash2 className="w-4 h-4" />
                               </button>
-                              <span className="text-xs font-bold px-2.5 text-[#1A1817] min-w-6 text-center">{item.quantity}</span>
-                              <button
-                                onClick={() => updateQuantity(item.id, 1)}
-                                className="px-2 py-0.5 hover:bg-[#E6E1DA] text-[#1A1817] font-bold transition-colors cursor-pointer"
-                              >
-                                <Plus className="w-3 h-3" />
-                              </button>
+                            </div>
+
+                            {itemOptions.length > 0 && (
+                              <p className="text-[11px] text-[#C86D3B] font-semibold mt-0.5 truncate">
+                                + {itemOptions.map((o) => o?.name).filter(Boolean).join(", ")}
+                              </p>
+                            )}
+
+                            <div className="flex items-center justify-between mt-2.5">
+                              <span className="font-serif font-bold text-sm text-[#1A1817]">
+                                {formatCurrency(itemPrice * itemQty)}
+                              </span>
+                              <div className="flex items-center border border-[#E6E1DA] rounded bg-[#F4F0EA] overflow-hidden">
+                                <button
+                                  type="button"
+                                  onClick={() => updateQuantity(item.id, -1)}
+                                  className="px-2 py-0.5 hover:bg-[#E6E1DA] text-[#1A1817] font-bold transition-colors cursor-pointer"
+                                >
+                                  <Minus className="w-3 h-3" />
+                                </button>
+                                <span className="text-xs font-bold px-2.5 text-[#1A1817] min-w-6 text-center">{itemQty}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => updateQuantity(item.id, 1)}
+                                  className="px-2 py-0.5 hover:bg-[#E6E1DA] text-[#1A1817] font-bold transition-colors cursor-pointer"
+                                >
+                                  <Plus className="w-3 h-3" />
+                                </button>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -310,7 +410,7 @@ export const CartDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
                       <ShieldCheck className="w-3 h-3" /> Secure Protocol
                     </span>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-2.5">
                     <div>
                       <label className="text-[11px] font-semibold text-[#1A1817] block mb-1">Full Name</label>
@@ -376,7 +476,7 @@ export const CartDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
                     <div className="space-y-2 text-xs bg-[#FFFFFF] p-4 rounded border border-[#E6E1DA]">
                       <div className="flex justify-between text-[#6B6560]">
                         <span>Dishes Subtotal</span>
-                        <span className="font-semibold text-[#1A1817]">{formatCurrency(subtotal)}</span>
+                        <span className="font-semibold text-[#1A1817]">{formatCurrency(subtotal || 0)}</span>
                       </div>
                       <div className="flex justify-between text-[#6B6560]">
                         <span>Fulfillment Fee ({orderType})</span>
@@ -386,7 +486,7 @@ export const CartDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
                       </div>
                       <div className="flex justify-between text-[#6B6560]">
                         <span>VAT Included</span>
-                        <span className="font-semibold text-[#1A1817]">{formatCurrency(tax)}</span>
+                        <span className="font-semibold text-[#1A1817]">{formatCurrency(tax || 0)}</span>
                       </div>
                       <div className="flex justify-between text-sm font-bold text-[#1A1817] pt-2.5 border-t border-[#E6E1DA]">
                         <span>Total Payable</span>
@@ -413,7 +513,10 @@ export const CartDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
               </div>
             )}
           </div>
-        </div>
+        </CartDrawerErrorBoundary>
       </div>
+    </div>
   );
+
+  return createPortal(drawerContent, document.body);
 };
