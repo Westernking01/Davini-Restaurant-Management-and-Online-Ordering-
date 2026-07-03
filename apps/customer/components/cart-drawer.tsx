@@ -153,11 +153,11 @@ export const CartDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
 
   const drawerContent = (
     <div
-      className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm animate-fade-in font-sans flex justify-end overflow-hidden"
+      className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm animate-fade-in font-sans flex justify-end"
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-md bg-[#FAF8F5] sm:border-l border-[#E6E1DA] shadow-2xl flex flex-col h-full max-h-screen overflow-hidden animate-slide-in-right z-[101]"
+        className="relative w-full max-w-md bg-[#FAF8F5] text-[#1A1817] sm:border-l border-[#E6E1DA] shadow-2xl flex flex-col h-full max-h-[100dvh] z-[10000] animate-slide-in-right opacity-100"
         onClick={(e) => e.stopPropagation()}
       >
         <CartDrawerErrorBoundary

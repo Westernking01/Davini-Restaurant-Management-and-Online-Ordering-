@@ -27,7 +27,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-screen flex flex-col selection:bg-amber-200 selection:text-amber-900 animate-fade-in">
+      <body className="min-h-screen flex flex-col selection:bg-amber-200 selection:text-amber-900">
         <AppWrapper>
           <div className="flex-1 flex flex-col">
             {children}
